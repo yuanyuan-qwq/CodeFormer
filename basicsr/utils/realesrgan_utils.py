@@ -50,13 +50,17 @@ class RealESRGANer():
         # else:
         #     self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') if device is None else device
 
-        self.device = get_device(gpu_id) if device is None else device
+        self.device = torch.device(f'cuda:{gpu_id}' if torch.cuda.is_available() and gpu_id is not None else 'cuda' if torch.cuda.is_available() else 'cpu') if device is None else device
+        if self.device.type == 'cuda':
+            print(f"Using GPU: {self.device}")
+        else:
+            print("Using CPU")
         
         # if the model_path starts with https, it will first download models to the folder: realesrgan/weights
         if model_path.startswith('https://'):
             model_path = load_file_from_url(
                 url=model_path, model_dir=os.path.join('weights/realesrgan'), progress=True, file_name=None)
-        loadnet = torch.load(model_path, map_location=torch.device('cpu'))
+        loadnet = torch.load(model_path, map_location=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         # prefer to use params_ema
         if 'params_ema' in loadnet:
             keyname = 'params_ema'
